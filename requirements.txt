@@ -10,4 +10,4 @@ faiss-cpu
 langchain_groq
 langchain_core
 pandas
-re
+streamlit
