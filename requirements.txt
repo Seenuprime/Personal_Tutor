@@ -1,0 +1,13 @@
+langchain
+langchain_community
+ipykernel
+youtube_search
+youtube-transcript-api
+duckduckgo-search
+wikipedia
+langchain_huggingface
+faiss-cpu
+langchain_groq
+langchain_core
+pandas
+streamlit

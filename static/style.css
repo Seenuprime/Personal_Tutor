@@ -1,0 +1,40 @@
+*{
+    margin: 20px;
+}
+
+.header{
+    text-align: center;
+    font-weight: 650;
+    margin-top: 20px;
+}
+
+form p{
+    margin-bottom: 0;
+}
+
+.learning-path {
+    margin: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f8f8f8;
+  }
+  
+  .learning-path h5 {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+  
+  .learning-path ol {
+    margin-top: 0;
+    padding-left: 20px;
+  }
+  
+  .learning-path li {
+    margin-bottom: 10px;
+  }
+  
+  .learning-path li ul {
+    margin-left: 20px;
+  }
