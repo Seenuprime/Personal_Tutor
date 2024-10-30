@@ -77,6 +77,25 @@ def topic_prompt(topic):
         Covering its significance, core concepts, practical applications, challenges, and future trends and provide code if necessary. 
         Offer clear and comprehensive information, structured to give a well-rounded understanding of the topic.
         Give some sorces for each tipics to refer with direct like in 'a' tag.
+        should be in this format:
+        <h3><b>main topic</b></h3><br>
+            <h2>sub topic</h2>
+                <b>(content name):</b>
+                <p>content</p>
+                <b>(content name):</b>
+                <p>content</p>
+                <pre> code (if necessary)</pre>
+                <a> link (reference) </a> (open on new tab)
+                <br>
+            <h2>sub topic</h2>
+                <b>(content name):</b>
+                <p>content</p>
+                <b>(content name):</b>
+                <p>content</p>
+                <pre> code (if necessary)</pre>
+                <a> link to resources</a> (open on new tab)
+                <br>
+        
     """
     prompt_template = PromptTemplate(
         input_variables=['topic'],
