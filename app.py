@@ -66,5 +66,32 @@ def home():
 
     return render_template("index.html", query=query, result=result)
 
+
+
+
+def topic_prompt(topic):
+    template = """
+       
+    """
+    prompt_template = PromptTemplate(
+        input_variables=['topic'],
+        template=template
+    )
+    return prompt_template.format(topic=topic)
+
+topic_llm = ChatGroq()
+
+@app.route('/topics', methods=['GET', 'POST'])
+def topics():
+    topic_query = Query()
+    result = None
+
+    if request.method == 'POST' and topic_query.validate_on_submit():
+        topic_user_topic = topic_query.query.data
+        topic_prompt_text = topic_prompt(topic_user_topic)
+        topic_result = topic_llm.invoke(topic_prompt_text).content
+    return render_template('topics.html', topic_query=topic_query, top_result=topic_result)
+
+
 if __name__ == "__main__":
     app.run(debug=True)
