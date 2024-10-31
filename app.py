@@ -1,16 +1,22 @@
-from flask import Flask, render_template, request
+import os
+import re
+import io
+from dotenv import load_dotenv
+from flask import Flask, render_template, request, send_file, session
+from fpdf import FPDF
 from forms import Query, Topic_Query
 from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
-import os
-from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
-
-# Set up the environment variable and LLM
 os.environ['GROQ_API_KEY'] = os.getenv('GROQ_API_KEY')
-llm = ChatGroq(model='gemma2-9b-it')
 
+# Initialize the LLMs
+llm = ChatGroq(model='gemma2-9b-it')
+topic_llm = ChatGroq(model="llama3-groq-70b-8192-tool-use-preview")
+
+# Define prompt functions
 def prompt(topic):
     template = """
         You are an assistant that helps organize learning paths by identifying key topics and their subtopics for the topic "{topic}". 
@@ -39,8 +45,37 @@ def prompt(topic):
         </ol>
 
         Keep the structure clear, concise, and easy to follow.
-        give some greetings at the end. 
+        Give some greetings at the end. 
     """
+    prompt_template = PromptTemplate(
+        input_variables=['topic'],
+        template=template
+    )
+    return prompt_template.format(topic=topic)
+
+def topics_prompt(topic):
+    template = """
+        Please provide a detailed explanation of the topic '{topic}'.
+        Use HTML formatting with <h3> to <h6> tags to structure sections, adding two new lines after each main section for readability.
+        Wrap code examples in <pre> tags.
+        
+        Structure as follows:
+        <h3><b>Main Topic</b></h3><br>
+        <h4>Subtopic 1</h4>
+            <b>(Section Title):</b>
+            <p>Content goes here...</p>
+            <pre> Code example here (if necessary) </pre>
+            <a href="https://example.com" target="_blank">Reference Link(actual name)</a><br>
+            
+        <h4>Subtopic 2</h4>
+            <b>(Section Title):</b>
+            <p>Content goes here...</p>
+            <pre> Code example here (if necessary) </pre>
+            <a href="https://example.com" target="_blank">Reference Link(actual name)</a><br>
+
+        Each subtopic should have a broad answer with a clear explanation of its significance, core concepts, practical applications, challenges, and future trends, with code samples where relevant.
+    """
+    
     prompt_template = PromptTemplate(
         input_variables=['topic'],
         template=template
@@ -49,7 +84,7 @@ def prompt(topic):
 
 # Initialize the Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'dab152770d8586850fa88528c67b9a78'
+app.secret_key =  'dab152770d8586850fa88528c67b9a78'  
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -58,52 +93,16 @@ def home():
 
     # Check if the form is submitted
     if request.method == 'POST' and query.validate_on_submit():
-        # Retrieve the query from the form
-        user_topic = query.query.data
-        # Generate prompt and invoke LLM
-        prompt_text = prompt(user_topic)
-        result = llm.invoke(prompt_text).content
+        user_topic = query.query.data  # Retrieve the query from the form
+        prompt_text = prompt(user_topic)  # Generate prompt and invoke LLM
+        try:
+            response = llm.invoke(prompt_text)
+            result = response.content if response else "No content generated. Please try again."
+            
+        except Exception as e:
+            result = f"Error generating content: {e}"
 
     return render_template("index.html", query=query, result=result)
-
-
-
-
-def topic_prompt(topic):
-    template = """
-        Please provide an in-depth explanation of the topic '{topic}',.
-        Add some new lines to make it look cool use html use lower head tags from h3-h6 with 2 new lines for each topic.
-        Use pre tag only to show the code.
-        Covering its significance, core concepts, practical applications, challenges, and future trends and provide code if necessary. 
-        Offer clear and comprehensive information, structured to give a well-rounded understanding of the topic.
-        Give some sorces for each tipics to refer with direct like in 'a' tag.
-        should be in this format:
-        <h3><b>main topic</b></h3><br>
-            <h2>sub topic</h2>
-                <b>(content name):</b>
-                <p>content</p>
-                <b>(content name):</b>
-                <p>content</p>
-                <pre> code (if necessary)</pre>
-                <a> link (reference) </a> (open on new tab)
-                <br>
-            <h2>sub topic</h2>
-                <b>(content name):</b>
-                <p>content</p>
-                <b>(content name):</b>
-                <p>content</p>
-                <pre> code (if necessary)</pre>
-                <a> link to resources</a> (open on new tab)
-                <br>
-        
-    """
-    prompt_template = PromptTemplate(
-        input_variables=['topic'],
-        template=template
-    )
-    return prompt_template.format(topic=topic)
-
-topic_llm = ChatGroq(model="llama3-groq-70b-8192-tool-use-preview")
 
 @app.route('/topics', methods=['GET', 'POST'])
 def topics():
@@ -112,8 +111,13 @@ def topics():
 
     if request.method == 'POST' and topic_query.validate_on_submit():
         topic_user_topic = topic_query.query.data
-        topic_prompt_text = topic_prompt(topic_user_topic)
-        topic_result = topic_llm.invoke(topic_prompt_text).content
+        topic_prompt_text = topics_prompt(topic_user_topic)
+        try:
+            response = topic_llm.invoke(topic_prompt_text)
+            topic_result = response.content if response else "No content generated. Please try again."
+        except Exception as e:
+            topic_result = f"Error generating content: {e}"
+
     return render_template('topics.html', topic_query=topic_query, topic_result=topic_result)
 
 
